@@ -82,7 +82,7 @@ class SimpleGradient(object):
         """
         mgnt = 5                    # the shift
         steps = 0
-        while mgnt >= self.prec:    # while there is a shift greater than precision
+        while mgnt >= self.prec:    # while there is a shift greater than precision - maybe use squared magnified gradient?
             new_pos = self.make_step()
             mgnt = magnitude(new_pos - self.current_point)
             self.current_point = new_pos
@@ -110,8 +110,15 @@ class SimpleGradient(object):
 
 
 class NewtonAlgorithm(object):
-    def __init__(self, ) -> None:
-        super().__init__()
+    def __init__(self, rreal, ffunc, pprec, sstep, min_max=-1, debugMode=False, rg=[-100, 100]) -> None:
+        self.real = rreal                                                        # no. of dimensions
+        self.func = ffunc                                                        # the function to minimize
+        self.prec = pprec                                                        # precision
+        self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        self.step  = sstep                                                       # Constant step of gradient
+        self.debug = debugMode
+        self.min_max = min_max
+        self.range = rg
 
     def exe(self):
         """
@@ -131,6 +138,25 @@ class NewtonAlgorithm(object):
                 print(f"Coordinates after {steps} steps:\n{list(self.current_point)}")
         return self.current_point
 
+    def make_step(self):
+        """
+        Steps taken as a function: x_i_new = x_i_old - grad(X)[i]*step (for finding minimum)
+        Parameters:
+            None
+        Result:
+            Point - vector of coefficients found
+        """
+        Hessi = np.array(nd.Hessian(self.func)(self.current_point))
+        Hessi = np.linalg.inv(Hessi)
+        grad = nd.Gradient(self.func)(self.current_point)
+        while True:
+            new_point = self.current_point + self.min_max*self.step*np.dot(Hessi,grad)
+            if new_point.max() > self.range[1] or new_point.min() < self.range[0]:
+                grad = grad/2
+            else:
+                break
+        return new_point
+
 def INTERFACE():
     print("Plese indicate the space seperated realities you will be researching:")
     HREALITY = input().split(" ")
@@ -146,10 +172,12 @@ def INTERFACE():
     for real in HREALITY:
         for alpha in ALPHA:
             print(f"\n\nCurrent parameters:\nrealities={real}\nalpha={alpha}")
-            if debug: print(f"Initiating Simple Gradient method...")
-            SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, 0.0001, MIMX, debug)
-            print(f"Coefficient found by Simple Gradient method:\n{list(SG.exe())}")
-
+            # if debug: print(f"Initiating Simple Gradient method...")
+            # SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, 0.0001, MIMX, debug)
+            # print(f"Coefficient found by Simple Gradient method:\n{list(SG.exe())}")
+            if debug: print(f'Initiating Newton Constant Step algorithm...')
+            NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, 0.001, MIMX, debug)
+            print(f"Coefficient found by Newton Constant Step algorithm:\n{list(NCS.exe())}")
 
 
 
