@@ -109,6 +109,28 @@ class SimpleGradient(object):
         return nn
 
 
+class NewtonAlgorithm(object):
+    def __init__(self, ) -> None:
+        super().__init__()
+
+    def exe(self):
+        """
+        Parameters:
+            None
+        Result:
+            Point - vector of coefficiants found
+        """
+        mgnt = 5                    # the shift
+        steps = 0
+        while mgnt >= self.prec:    # while there is a shift greater than precision
+            new_pos = self.make_step()
+            mgnt = magnitude(new_pos - self.current_point)
+            self.current_point = new_pos
+            steps += 1
+            if steps % 1000 == 0 and self.debug:
+                print(f"Coordinates after {steps} steps:\n{list(self.current_point)}")
+        return self.current_point
+
 def INTERFACE():
     print("Plese indicate the space seperated realities you will be researching:")
     HREALITY = input().split(" ")
