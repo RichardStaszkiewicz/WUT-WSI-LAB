@@ -15,19 +15,21 @@
 # GIT_SSL_NO_VERIFY=true
 
 
-# Pytania:
-# -> W jaki sposób zastosować PREC jeżeli nie znamy optimum globalnego?
+# można zrobić obiekt z flagami - nie chcę rozwalać kodu...
+# od 18.00 do 20.00 w pon w sali 26 parter
 
 
 import numpy as np
 import numdifftools as nd
 from math import *
 
-STEP_PAR=0
+
+STEP_PAR=0.01
 HREALITY=[]             # realities to be verified
 ALPHA=[]                # alphas to be verified
 MIMX=0                  # -1 -> find minimum & 1 -> find maximum
-PRECISION=0.0001        # default precision
+PRECISION=0.000001      # default precision
+MAX_ITER=10000          # maximal iteration
 
 
 def magnitude(X):
@@ -63,15 +65,18 @@ def dafaultFunction(alpha):
 
 
 class SimpleGradient(object):
-    def __init__(self, rreal, ffunc, pprec, sstep, min_max=-1, debugMode=False, rg=[-100, 100]) -> None:
+    def __init__(self, rreal, ffunc, pprec, sstep, spoint = None, min_max=-1, debugMode=False, rg=[-100, 100], max_iter=None) -> None:
         self.real = rreal                                                        # no. of dimensions
         self.func = ffunc                                                        # the function to minimize
         self.prec = pprec                                                        # precision
-        self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        if spoint.all(): self.current_point=spoint
+        else: self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
         self.step  = sstep                                                       # Constant step of gradient
         self.debug = debugMode
         self.min_max = min_max
         self.range = rg
+        if max_iter: self.maxiter = max_iter
+        else: self.maxiter = 10000
 
     def exe(self):
         """
@@ -82,13 +87,16 @@ class SimpleGradient(object):
         """
         mgnt = 5                    # the shift
         steps = 0
-        while mgnt >= self.prec:    # while there is a shift greater than precision - maybe use squared magnified gradient?
+        while mgnt >= self.prec or steps < self.maxiter:    # War1-> przesunięcie względne; War2 -> liczba iteracji
             new_pos = self.make_step()
             mgnt = magnitude(new_pos - self.current_point)
             self.current_point = new_pos
             steps += 1
             if steps % 1000 == 0 and self.debug:
                 print(f"Coordinates after {steps} steps:\n{list(self.current_point)}")
+            if steps < 10:
+                print(f"{list(self.current_point)}")
+                print(f'{self.func(self.current_point)}')
         return self.current_point
 
     def make_step(self):
@@ -100,25 +108,31 @@ class SimpleGradient(object):
             Point - vector of coefficients found
         """
         grad = nd.Gradient(self.func)(self.current_point)
-        while True:
-            nn = self.current_point + self.min_max*self.step*grad
-            if nn.max() > self.range[1] or nn.min() < self.range[0]:
-                grad = grad/2
-            else:
-                break
+        nn = self.current_point + self.min_max*self.step*grad
+        # ss = self.step
+        # while True:
+        #     nn = self.current_point + self.min_max*ss*grad
+        #     if nn.max() > self.range[1] or nn.min() < self.range[0]:
+        #         ss /= 2
+        #     else:
+        #         break
         return nn
 
 
 class NewtonAlgorithm(object):
-    def __init__(self, rreal, ffunc, pprec, sstep, min_max=-1, debugMode=False, rg=[-100, 100]) -> None:
+    def __init__(self, rreal, ffunc, pprec, sstep, spoint = None, bbacktracking=False, min_max=-1, debugMode=False, rg=[-100, 100], max_iter=None) -> None:
         self.real = rreal                                                        # no. of dimensions
         self.func = ffunc                                                        # the function to minimize
         self.prec = pprec                                                        # precision
-        self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        if spoint: self.current_point = spoint
+        else: self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
         self.step  = sstep                                                       # Constant step of gradient
         self.debug = debugMode
         self.min_max = min_max
         self.range = rg
+        self.backtracking = bbacktracking
+        if max_iter: self.maxiter = max_iter
+        else: self.maxiter = 10000
 
     def exe(self):
         """
@@ -129,8 +143,9 @@ class NewtonAlgorithm(object):
         """
         mgnt = 5                    # the shift
         steps = 0
-        while mgnt >= self.prec:    # while there is a shift greater than precision
-            new_pos = self.make_step()
+        while mgnt >= self.prec or steps < self.maxiter:    # while there is a shift greater than precision
+            if self.backtracking: new_pos = self.make_stepBC()
+            else: new_pos = self.make_stepNBC()
             mgnt = magnitude(new_pos - self.current_point)
             self.current_point = new_pos
             steps += 1
@@ -138,7 +153,7 @@ class NewtonAlgorithm(object):
                 print(f"Coordinates after {steps} steps:\n{list(self.current_point)}")
         return self.current_point
 
-    def make_step(self):
+    def make_stepNBC(self):
         """
         Steps taken as a function: x_i_new = x_i_old - grad(X)[i]*step (for finding minimum)
         Parameters:
@@ -149,16 +164,41 @@ class NewtonAlgorithm(object):
         Hessi = np.array(nd.Hessian(self.func)(self.current_point))
         Hessi = np.linalg.inv(Hessi)
         grad = nd.Gradient(self.func)(self.current_point)
+        ss = self.step
         while True:
-            new_point = self.current_point + self.min_max*self.step*np.dot(Hessi,grad)
+            new_point = self.current_point + self.min_max*ss*np.dot(Hessi,grad)
             if new_point.max() > self.range[1] or new_point.min() < self.range[0]:
-                grad = grad/2
+                ss /= 2
             else:
                 break
         return new_point
 
+    def make_stepBC(self):
+        """
+        Steps taken as a function: x_i_new = x_i_old - grad(X)[i]*step (for finding minimum)
+        Parameters:
+            None
+        Result:
+            Point - vector of coefficients found
+        """
+        Hessi = np.array(nd.Hessian(self.func)(self.current_point))
+        Hessi = np.linalg.inv(Hessi)
+        grad = nd.Gradient(self.func)(self.current_point)
+        penalty_coeff = 1
+        ss = self.step
+        while True:
+            new_point = self.current_point + self.min_max*ss*np.dot(Hessi,grad)
+            if new_point.max() > self.range[1] or new_point.min() < self.range[0]:
+                ss /= 2
+            elif self.func(self.current_point) > (1 - 0.9*penalty_coeff)*self.func(new_point):
+                penalty_coeff /=2
+            else:
+                break
+        return new_point
+
+
 def INTERFACE():
-    print("Plese indicate the space seperated realities you will be researching:")
+    print("Plese indicate the space seperated dimensions you will be researching:")
     HREALITY = input().split(" ")
     HREALITY = [int(i) for i in HREALITY]
     print("Please indicate the space seperated alphas you will be researching:")
@@ -171,13 +211,17 @@ def INTERFACE():
     print(f"Information: the default precision is set to {PRECISION}\nCOMPUTING...")
     for real in HREALITY:
         for alpha in ALPHA:
-            print(f"\n\nCurrent parameters:\nrealities={real}\nalpha={alpha}")
-            # if debug: print(f"Initiating Simple Gradient method...")
-            # SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, 0.0001, MIMX, debug)
-            # print(f"Coefficient found by Simple Gradient method:\n{list(SG.exe())}")
-            if debug: print(f'Initiating Newton Constant Step algorithm...')
-            NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, 0.001, MIMX, debug)
-            print(f"Coefficient found by Newton Constant Step algorithm:\n{list(NCS.exe())}")
+            print(f"\n\nCurrent parameters:\ndimensions={real}\nalpha={alpha}")
+            if debug: print(f"Initiating Simple Gradient method...")
+            point = np.array([100, 100])
+            SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, STEP_PAR, point, MIMX, debug)
+            print(f"Coefficient found by Simple Gradient method:\n{list(SG.exe())}")
+            # if debug: print(f'Initiating Newton Constant Step algorithm...')
+            # NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, STEP_PAR, None, MIMX, debug)
+            # print(f"Coefficient found by Newton Constant algorithm:\n{list(NCS.exe())}")
+            # if debug: print(f'Initiating Newton Backtracing algorithm...')
+            # NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, STEP_PAR, None, MIMX, debug)
+            # print(f"Coefficient found by Newton Backtracking algorithm:\n{list(NCS.exe())}")
 
 
 
