@@ -22,6 +22,7 @@
 import numpy as np
 import numdifftools as nd
 from math import *
+import csv
 
 
 STEP_PAR=0.01
@@ -69,8 +70,9 @@ class SimpleGradient(object):
         self.real = rreal                                                        # no. of dimensions
         self.func = ffunc                                                        # the function to minimize
         self.prec = pprec                                                        # precision
-        if spoint.all(): self.current_point=spoint
-        else: self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        if spoint is None: self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        elif spoint.all(): self.current_point=spoint
+        else: self.current_point=spoint
         self.step  = sstep                                                       # Constant step of gradient
         self.debug = debugMode
         self.min_max = min_max
@@ -87,16 +89,13 @@ class SimpleGradient(object):
         """
         mgnt = 5                    # the shift
         steps = 0
-        while mgnt >= self.prec or steps < self.maxiter:    # War1-> przesunięcie względne; War2 -> liczba iteracji
+        while mgnt >= self.prec and steps < self.maxiter:    # War1-> przesunięcie względne; War2 -> liczba iteracji
             new_pos = self.make_step()
             mgnt = magnitude(new_pos - self.current_point)
             self.current_point = new_pos
             steps += 1
             if steps % 1000 == 0 and self.debug:
                 print(f"Coordinates after {steps} steps:\n{list(self.current_point)}")
-            if steps < 10:
-                print(f"{list(self.current_point)}")
-                print(f'{self.func(self.current_point)}')
         return self.current_point
 
     def make_step(self):
@@ -108,6 +107,8 @@ class SimpleGradient(object):
             Point - vector of coefficients found
         """
         grad = nd.Gradient(self.func)(self.current_point)
+        # print(grad)
+        # print(self.current_point)
         nn = self.current_point + self.min_max*self.step*grad
         # ss = self.step
         # while True:
@@ -124,8 +125,8 @@ class NewtonAlgorithm(object):
         self.real = rreal                                                        # no. of dimensions
         self.func = ffunc                                                        # the function to minimize
         self.prec = pprec                                                        # precision
-        if spoint: self.current_point = spoint
-        else: self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        if spoint is None: self.current_point=np.random.uniform(low=rg[0], high=rg[1], size=rreal)     # Starting position X
+        else: self.current_point = spoint
         self.step  = sstep                                                       # Constant step of gradient
         self.debug = debugMode
         self.min_max = min_max
@@ -143,7 +144,7 @@ class NewtonAlgorithm(object):
         """
         mgnt = 5                    # the shift
         steps = 0
-        while mgnt >= self.prec or steps < self.maxiter:    # while there is a shift greater than precision
+        while mgnt >= self.prec and steps < self.maxiter:    # while there is a shift greater than precision
             if self.backtracking: new_pos = self.make_stepBC()
             else: new_pos = self.make_stepNBC()
             mgnt = magnitude(new_pos - self.current_point)
@@ -190,7 +191,11 @@ class NewtonAlgorithm(object):
             new_point = self.current_point + self.min_max*ss*np.dot(Hessi,grad)
             if new_point.max() > self.range[1] or new_point.min() < self.range[0]:
                 ss /= 2
-            elif self.func(self.current_point) > (1 - 0.9*penalty_coeff)*self.func(new_point):
+            elif self.func(self.current_point) < (1 - 0.9*penalty_coeff)*self.func(new_point) and self.min_max == -1:
+                print(f'penalty {penalty_coeff}')
+                penalty_coeff /=2
+            elif self.func(self.current_point) > (1 - 0.9*penalty_coeff)*self.func(new_point) and self.min_max == 1:
+                print(f'penalty {penalty_coeff}')
                 penalty_coeff /=2
             else:
                 break
@@ -213,16 +218,27 @@ def INTERFACE():
         for alpha in ALPHA:
             print(f"\n\nCurrent parameters:\ndimensions={real}\nalpha={alpha}")
             if debug: print(f"Initiating Simple Gradient method...")
-            point = np.array([100, 100])
-            SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, STEP_PAR, point, MIMX, debug)
+            point = np.array(real*[100])
+            SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, 0.005, None, MIMX, debug)
             print(f"Coefficient found by Simple Gradient method:\n{list(SG.exe())}")
             # if debug: print(f'Initiating Newton Constant Step algorithm...')
-            # NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, STEP_PAR, None, MIMX, debug)
+            # NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, 1, None, False, MIMX, debug)
             # print(f"Coefficient found by Newton Constant algorithm:\n{list(NCS.exe())}")
             # if debug: print(f'Initiating Newton Backtracing algorithm...')
-            # NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, STEP_PAR, None, MIMX, debug)
+            # NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, 1, point, True, MIMX, debug)
             # print(f"Coefficient found by Newton Backtracking algorithm:\n{list(NCS.exe())}")
 
 
+if __name__ == "__main__":
+    INTERFACE()
 
-INTERFACE()
+
+# Działające parametry:
+# a = 1, 10; n = 10, 20; precision = 0.000001
+# SimpleGradient -> step = 0.01 (przy step = 1 wpada w oscylację)
+# NewtonAlgorithm no backtracking -> step = 1
+# NewtonAlgorithm wht backtracking -> step = 0.01
+# a = 100; n = 10, 20; precision = 0.000001
+# SimpleGradient -> step = 0.001 (ledwo - ponad 6k kroków)
+# NewtonAlgorithm no backtracking -> step = 1
+# NewtonAlgorithm with backtracking -> step = 0.01
