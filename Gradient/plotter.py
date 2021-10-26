@@ -239,7 +239,6 @@ import time
 HREALITY=[]             # realities to be verified
 ALPHA=[]                # alphas to be verified
 MIMX=0                  # -1 -> find minimum & 1 -> find maximum
-PRECISION=0.000001      # default precision
 MAX_ITER=10000          # maximal iteration
 
 
@@ -423,12 +422,12 @@ def INTERFACE():
     MIMX = int(input())
     print("Would you like to recieve messages of processing? (y/n):")
     debug = 1 if str(input()) == "y" else 0
-    print(f"Information: the default precision is set to {PRECISION}\nCOMPUTING...")
+    print(f"Information: the default precision is set to 0.000001\nCOMPUTING...")
 
     # logger:
     # Dimension; alpha; Starting point random; SimpleGradientIT; SimpleGradient Time; NewtonConstIT; NewtonConst Time; NewtonBacktrIT; NewtonBacktr Time
     with open('logger.csv', 'w') as lg:
-        fieldnames = ['Dimensions', 'alpha', 'SP-random', 'SG-It', 'SG-T', 'NC-It', 'NC-T', 'NB-It', 'NB-T']
+        fieldnames = ['Dimensions', 'alpha', 'SP-random', 'SG-It', 'SG-T', 'SG-R2', 'NC-It', 'NC-T', 'NC-R2', 'NB-It', 'NB-T', 'NB-R2']
         writer = csv.writer(lg, delimiter=',', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(fieldnames)
         for real in HREALITY:
@@ -438,20 +437,26 @@ def INTERFACE():
                     if point is None: log.append(True)
                     else: log.append(False)
 
-                    SG = SimpleGradient(real, dafaultFunction(alpha), PRECISION, 0.005, point, MIMX, debug)
+                    SG = SimpleGradient(real, dafaultFunction(alpha), 0.000001, 0.005, point, MIMX, debug)
                     start = time.time()
-                    log.append(SG.exe()[1])
+                    ans = SG.exe()
+                    log.append(ans[1])
                     log.append(time.time() - start)
+                    log.append(magnitude(ans[0]))
 
-                    NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, 1, point, False, MIMX, debug)
+                    NCS = NewtonAlgorithm(real, dafaultFunction(alpha), 0.000001, 1, point, False, MIMX, debug)
                     start = time.time()
-                    log.append(NCS.exe()[1])
+                    ans = NCS.exe()
+                    log.append(ans[1])
                     log.append(time.time() - start)
+                    log.append(magnitude(ans[0]))
 
-                    NCS = NewtonAlgorithm(real, dafaultFunction(alpha), PRECISION, 1, point, True, MIMX, debug)
+                    NCS = NewtonAlgorithm(real, dafaultFunction(alpha), 0.000001, 1, point, True, MIMX, debug)
                     start = time.time()
-                    log.append(NCS.exe()[1])
+                    ans = NCS.exe()
+                    log.append(ans[1])
                     log.append(time.time() - start)
+                    log.append(magnitude(ans[0]))
 
                     writer.writerow(log)
 
@@ -460,13 +465,3 @@ def INTERFACE():
 if __name__ == "__main__":
     INTERFACE()
 
-
-# Działające parametry:
-# a = 1, 10; n = 10, 20; precision = 0.000001
-# SimpleGradient -> step = 0.01 (przy step = 1 wpada w oscylację)
-# NewtonAlgorithm no backtracking -> step = 1
-# NewtonAlgorithm wht backtracking -> step = 0.01
-# a = 100; n = 10, 20; precision = 0.000001
-# SimpleGradient -> step = 0.001 (ledwo - ponad 6k kroków)
-# NewtonAlgorithm no backtracking -> step = 1
-# NewtonAlgorithm with backtracking -> step = 0.01
