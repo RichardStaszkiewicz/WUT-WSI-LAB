@@ -178,10 +178,8 @@ class NewtonAlgorithm(object):
             if new_point.max() > self.range[1] or new_point.min() < self.range[0]:
                 ss /= 2
             elif self.func(self.current_point) < (1 - 0.9*penalty_coeff)*self.func(new_point) and self.min_max == -1:
-                print(f'penalty {penalty_coeff}')
                 penalty_coeff /=2
             elif self.func(self.current_point) > (1 - 0.9*penalty_coeff)*self.func(new_point) and self.min_max == 1:
-                print(f'penalty {penalty_coeff}')
                 penalty_coeff /=2
             else:
                 break
@@ -276,5 +274,3 @@ def INTERFACE():
 
 if __name__ == "__main__":
     INTERFACE()
-
-
