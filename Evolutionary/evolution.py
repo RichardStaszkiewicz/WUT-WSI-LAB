@@ -2,7 +2,20 @@
 # 1. Funkcja sferyczna i tasiemiec to funkcje kary, a nie te do optymalizacji?
 # 2. Jeszcze raz - przesuwanie rozkładem po przestrzeni
 
+# matplotlib contour
+
+# Wstęp
+# Opis eksperymentów
+# Wyniki i dyskusja
+# Wnioski
+
+# zależności od:
+# 1. sigmy
+# 2. lambdy
+# 3. metody
+
 from math import *
+import numpy as np
 
 def magnitude(X):
     """
@@ -61,28 +74,42 @@ def second_function(Dimensions):
 #     'max_iter'
 # }
 
+# Samoadaptacja -> dla każdego organizmu osobna sigma
+# Log-Gauss -> jedna wspólna sigma dla każdego organizmu
+
 class EvolutionStrategy(object):
 
-    def __init__(self, parameters) -> None:
+    def __init__(self, func, center, sigma, parameters) -> None:
         self.param = parameters
-        self.cpopulation = self.new_population(parameters)
         self.generation = 0
-        self.centroid = 1/self.param['mu'] * sum(self.cpopulation)
-    pass
+        if center:
+            self.centroid = center
+        else:
+            self.centroid = np.random.uniform(low=parameters['limits'][0], high=parameters['limits'][1], size=parameters['dimension'])
+        self.cpopulation = []
+
+
+    def exe(self):
+        while(self.generation < self.param['max_iter'] and self.shift > self.param['precision']):
+            self.new_population()           # na podstawie centroidu generowane lambda punktów
+            self.selection()                # posortuj po funkcji i ubij połowę najgorszych
+            self.recombination()            # nowy centroid, nowa sigma
+
+
 
 
 def INTERFACE():
     params = {
         'dimension' : 10,
-        'func' : spheric_function(10),
-        'prec' : 0.000001,
-        'mu': 10,
-        'lambda' : 200,
-        'start_sigma' : 1,
-        'self-adaptation' : True,
-        'limits' : [-100, 100],
-        'debug' : False,
-        'max_iter' : 1000}
+        'prec' : 0.000001,          # The minimum shift in gamma generations
+        'mu': 10,                   # The survival population
+        'lambda' : 20,              # The generated population
+        'start_sigma' : 1,          # Starting sigma
+        'gamma' : 20,               # number of iterations to sefine stagnation
+        'self-adaptation' : True,   # Algorithm flag
+        'limits' : [-100, 100],     # Limits of parameters
+        'debug' : False,            # Show debug info
+        'max_iter' : 2000}          # Maximum iterations (generations)
 
     population = [int(i) for i in input().split(" ")]
     sigma = [float(i) for i in input().split(" ")]
