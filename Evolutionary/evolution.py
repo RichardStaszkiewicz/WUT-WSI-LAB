@@ -1,6 +1,5 @@
 # Pytania:
-# 1. Funkcja sferyczna i tasiemiec to funkcje kary, a nie te do optymalizacji?
-# 2. Jeszcze raz - przesuwanie rozkładem po przestrzeni
+# 1. Czy w wyrażeniu exp{T*N(0, 1)} nie dałoby się wciągnąć by było exp{N(0, T)}?
 
 # matplotlib contour
 
@@ -81,20 +80,56 @@ class EvolutionStrategy(object):
 
     def __init__(self, func, center, sigma, parameters) -> None:
         self.param = parameters
+        self.function = func
         self.generation = 0
         if center:
             self.centroid = center
         else:
             self.centroid = np.random.uniform(low=parameters['limits'][0], high=parameters['limits'][1], size=parameters['dimension'])
         self.cpopulation = []
+        self.sigma = sigma
+        self.shift = self.param['prec'] + 1
+        self.logs = []              # stores logs of each generation as (centroid, sigma)
 
 
     def exe(self):
-        while(self.generation < self.param['max_iter'] and self.shift > self.param['precision']):
+        while(self.generation < self.param['max_iter'] and self.shift > self.param['prec']):
             self.new_population()           # na podstawie centroidu generowane lambda punktów
             self.selection()                # posortuj po funkcji i ubij połowę najgorszych
-            self.recombination()            # nowy centroid, nowa sigma
+            self.recombination()            # nowy centroid, nowa sigma, aktualizacja shiftu
 
+
+    def new_population(self):
+        """
+            Each point consists of a tuple(). In case of LMR
+            the tuple contains only coefficiants. In case of EA,
+            on the second place is the used sigma.
+        """
+        if self.param['self-adaptation']:   # generate using self-adaptation
+            self.cpopulation = [None] * self.param['lambda']
+            for i in range(self.param['lambda']):
+                altered_sigma = self.sigma * exp((1/sqrt(self.param['dimension'])) * np.random.normal(0, 1))
+                self.cpopulation[i] = (np.random.normal(self.centroid, altered_sigma), altered_sigma)
+        else:                               # generate using gauss
+            self.cpopulation = [(np.random.normal(self.centroid, self.sigma)) for _ in range(self.param['lambda'])]
+
+
+    def selection(self):
+        self.cpopulation = [(x, self.function(x[0])) for x in self.cpopulation] # count the function values
+        self.cpopulation = self.cpopulation.sort(key=lambda x:x[1])             # sort via function value
+        self.cpopulation = self.cpopulation[:self.param['mu']]                  # kill all not in range mu
+
+
+    def recombination(self):
+        self.logs.append((self.centroid, self.sigma))
+        self.generation += 1
+        self.centroid = sum(self.cpopulation[0][0]) / self.param['mu']
+        if self.param['self-adaptation']:
+            self.sigma = sum(self.cpopulation[0][1]) / self.param['mu'] # count expecte sigma
+        else:
+            self.sigma *= exp((1/sqrt(self.param['dimension'])) * np.random.normal(0, 1))
+        if(self.generation > self.param['gamma']):
+            self.shift = self.centroid - self.logs[-(self.param['gamma'] + 1)][0]
 
 
 
