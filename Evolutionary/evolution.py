@@ -49,7 +49,6 @@ def happy_cat(Dimensions):
         """
         try:
             m = sqrt(sum(i**2 for i in X))
-            print(m**2)
             return ((m**2 - Dimensions)**2)**(1/8)+(Dimensions)**(-1)*(0.5*m**2 + sum(X)) + 0.5
         except:
             return sys.maxsize
