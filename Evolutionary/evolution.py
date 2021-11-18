@@ -49,9 +49,8 @@ def happy_cat(Dimensions):
         """
         try:
             m = sqrt(sum(i**2 for i in X))
-            summ = ((m**2 - Dimensions)**2)**(1/8)
-            summ += (1/Dimensions)*(0.5*m**2 + sum(X)) + 0.5
-            return summ
+            print(m**2)
+            return ((m**2 - Dimensions)**2)**(1/8)+(Dimensions)**(-1)*(0.5*m**2 + sum(X)) + 0.5
         except:
             return sys.maxsize
     return func
@@ -64,14 +63,14 @@ class EvolutionStrategy(object):
         self.function = func
         self.generation = 0
         if center:
-            self.centroid = center
+            self.centroid = np.array(center, dtype=float)
         else:
-            self.centroid = np.random.uniform(low=parameters['limits'][0], high=parameters['limits'][1], size=parameters['dimension'])
+            self.centroid = np.array(np.random.uniform(low=parameters['limits'][0], high=parameters['limits'][1], size=parameters['dimension']), dtype=float)
         self.cpopulation = []
         self.sigma = sigma
         self.shift = self.param['prec'] + 1
-        self.logs = []              # stores logs of each generation as (centroid, sigma)
-        self.bsf = (([], sys.maxsize))               # stores best so far organism
+        self.logs = []              # stores logs of each generation as (bsf, sigma)
+        self.bsf = np.array((([], sys.maxsize)), dtype=object)               # stores best so far organism
 
 
     def exe(self):
@@ -79,7 +78,8 @@ class EvolutionStrategy(object):
             self.new_population()           # using sigma & centroid, generate lambda points
             self.selection()                # sort vis function and kill all except first mu
             self.recombination()            # new centroid & sigma, logging, shift & generation actualisation
-
+            if (self.param['debug']):
+                print(f"Generation {self.generation}: {self.function(self.centroid)}")
         return
 
 
@@ -109,15 +109,15 @@ class EvolutionStrategy(object):
     # cpopulation = [point]
     # point = (organism, function_value) = (([coeffs], used_sigma), function_value)
     def recombination(self):
-        self.logs.append((self.centroid, self.sigma))
+        self.logs.append([self.bsf[0], self.bsf[1], self.sigma])
         self.generation += 1
         self.centroid = sum(point[0][0] for point in self.cpopulation) / self.param['mu']
         if self.param['self-adaptation']:
-            self.sigma = sum(i[1] for i in self.cpopulation) / self.param['mu'] # count expected sigma
+            self.sigma = sum(i[0][1] for i in self.cpopulation) / self.param['mu'] # count expected sigma
         else:
             self.sigma *= exp((1/sqrt(self.param['dimension'])) * np.random.normal(0, 1))
         if(self.generation > self.param['gamma']):
-            self.shift = self.centroid - self.logs[-self.param['gamma']][0]
+            self.shift = self.centroid - self.logs[-self.param['gamma']][0][0]
             self.shift = sqrt(sum(i**2 for i in self.shift))
         return
 
@@ -125,39 +125,44 @@ class EvolutionStrategy(object):
 
 def INTERFACE():
     params = {
-        'dimension' : 10,           # Fucntion dimensions
+        'dimension' : 9,           # Fucntion dimensions
         'prec' : 0.000001,          # The minimum shift in gamma generations
         'mu': 10,                   # The survival population
         'lambda' : 20,              # The generated population
         'gamma' : 20,               # number of iterations to define stagnation
         'self-adaptation' : True,   # Algorithm flag
         'limits' : [-100, 100],     # Limits of parameters to choose from uniform distribution
-        'debug' : False,            # Show debug info
+        'debug' : True,            # Show debug info
         'max_iter' : 2000}          # Maximum iterations (generations)
 
     seeds = [1]# [-10, 1, 19, 98, 1002]
 
-    population = [int(i) for i in input("Plese inticate populations to research:\n").split(" ")]
-    sigma = [float(i) for i in input("Please indicate sigmas to research: \n").split(" ")]
+    # population = [int(i) for i in input("Plese inticate populations to research:\n").split(" ")]
+    # sigma = [float(i) for i in input("Please indicate sigmas to research: \n").split(" ")]
 
-    centroid = None # [-100] * params['dimension']
+    centroid = [-100] * params['dimension']
+    SA = EvolutionStrategy(spheric(params['dimension']), centroid, 1, params)
+    SA.exe()
+    print(SA.bsf[1])
+    # for pop in population:
+    #     params['lambda'] = pop
+    #     params['mu'] = pop//2
+    #     for sig in sigma:
+    #         for sd in seeds:
+    #             np.random.seed(sd)
+    #             params['self-adaptation'] = False
+    #             LMR = EvolutionStrategy(happy_cat(params['dimension']), centroid, sig, params)
+    #             LMR.exe()
+    #             print(LMR.bsf)
+    #             print(LMR.generation)
 
-    for pop in population:
-        params['lambda'] = pop
-        for sig in sigma:
-            for sd in seeds:
-                np.random.seed(sd)
-                params['self-adaptation'] = False
-                LMR = EvolutionStrategy(spheric(params['dimension']), centroid, sig, params)
-                LMR.exe()
-                print(LMR.bsf)
-                print(LMR.generation)
-
-                params['self-adaptation'] = True
-                SA = EvolutionStrategy(spheric(params['dimension']), centroid, sig, params)
-                SA.exe()
-                print(SA.bsf)
-                print(SA.generation)
+    #             # params['self-adaptation'] = True
+    #             # SA = EvolutionStrategy(happy_cat(params['dimension']), centroid, sig, params)
+    #             # SA.exe()
+    #             # print(SA.bsf)
+    #             # print(SA.generation)
 
 
-INTERFACE()
+if __name__ == "__main__":
+    INTERFACE()
+    # print(happy_cat(10)([-1]*10))
