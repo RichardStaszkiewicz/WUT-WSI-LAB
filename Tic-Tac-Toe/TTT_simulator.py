@@ -1,14 +1,22 @@
+import numpy as np
+
 INF = 1e9
 
 
 class State(object):
-    def __init__(self, board, move) -> None:
-        self.board = board #list [3][3] => -1 MIN, 1 MAX, 0 spare
+    def __init__(self, board=None, move=-1) -> None:
+        if(board): #list [3][3] => -1 MIN, 1 MAX, 0 spare
+            self.board = board
+        else:
+            self.board = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         self.move = move #1 -> MAX, -1 -> MIN
 
 class Game(object):
     def __init__(self, state) -> None:
         self.state = state
+
+    def exe(self, Player1, Player2):
+        pass
 
 class Player(object):
     def __init__(self, type, depth) -> None:
@@ -44,17 +52,32 @@ class Player(object):
         else: return (options[0][0], gamestate) # if MIN, return minimal payback for current gamestate
 
 
-    def verify_winner(gamestate: State()):
-        conclusion = True
-        winner_payback = -INF
-        return (conclusion, winner_payback)
+    def verify_winner(self, gamestate: State()):
+        if(3 in sum(gamestate.board) or 3 in sum(gamestate.board.T)): return (True, INF) # MAX has won
+        if(-3 in sum(gamestate.board) or -3 in sum(gamestate.board.T)): return (True, -INF) #MIN has won
+
+        auxiliary_sum_right = 0
+        auxiliary_sum_left = 0
+        for i in (0, 1, 2):
+            auxiliary_sum_right += gamestate.board[i][i]
+            auxiliary_sum_left += gamestate.board[i][2-i]
+        if(auxiliary_sum_left == 3 or auxiliary_sum_right == 3): return (True, INF) #MAX has won
+        if(auxiliary_sum_left == -3 or auxiliary_sum_right == -3): return (True, -INF) #MIN has won
+
+        if(0 in gamestate.board): return (False, 0) # there are still possible moves
+        return (True, 0) # there are no possible moves, nobody has won
 
 
     def heuristic(gamestate: State()):
-        pass
+        hvalue = 0
+        for y in (0, 1, 2):
+            for x in (0, 1, 2):
+                if gamestate.board[y][x] == 0:
+                    pass
 
 
 
 
 if __name__ == "__main__":
-    pass
+    Game(State())
+    print(Player(-1, 3).verify_winner(State()))
