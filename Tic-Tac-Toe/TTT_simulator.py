@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 INF = 1e9
 
@@ -32,7 +33,7 @@ class State(object):
             for x in (0, 1, 2):
                 if self.board[y][x] == 0:
                     hvalue += self.single_place_hval(x, y)
-        return hvalue * self.move
+        return hvalue * self.move * -1
 
     def single_place_hval(self, x, y):
         hvalue = 0
@@ -77,13 +78,15 @@ class Game(object):
             print("Players must be MIN-MAX")
             return Exception("Player error")
 
+        self.state.move = Player1.strategy
+
         in_game = self.state.verify_winner()
         print(self)
         while(in_game[0] == False):
             self.state = Player1.move(self.state)
             print(self)
             in_game = self.state.verify_winner()
-            if not in_game[0]: break
+            if in_game[0]: break
             self.state = Player2.move(self.state)
             print(self)
             in_game = self.state.verify_winner()
@@ -98,7 +101,14 @@ class Game(object):
         return 0
 
     def __str__(self):
-        return ""
+        info = ""
+        if self.state.move == -1:
+            x = "MIN move"
+        else:
+            x = "MAX move"
+        info += f"\n----{x}----\n"
+        info += self.state.__str__()
+        return info
 
 
 class Player(object):
@@ -112,33 +122,40 @@ class Player(object):
 
 
     def make_move(self, gamestate: State(), depth: int()):
+        win = gamestate.verify_winner()
+        if win[0]:
+            return (win[1], gamestate)
+
         if depth == 0:
-            win = gamestate.verify_winner()
-            if win[0]:
-                return (win[1], gamestate)
-            else:
-                return (gamestate.heuristic(), gamestate)
+            return (gamestate.heuristic(), gamestate)
         else: depth -= 1
+
 
         options = []
         for x in range(3):
             for y in range(3):
                 if gamestate.board[x][y] == 0:
-                    copy_gamestate = gamestate
+                    copy_gamestate = deepcopy(gamestate)
                     copy_gamestate.board[x][y] = gamestate.move
                     copy_gamestate.move *= -1
                     options.append(self.make_move(copy_gamestate, depth))
 
-        options = sorted(options, key=lambda x: x[1]) # sort from min to max via payback
+        options = sorted(options, key=lambda x: x[0]) # sort from min to max via payback
 
-        if gamestate.move == 1: return (options[-1][0], gamestate) # if MAX, return maximal payback for current gamestate
-        else: return (options[0][0], gamestate) # if MIN, return minimal payback for current gamestate
+        if depth == self.depth - 2:
+            if gamestate.move == 1: return (options[-1][0], gamestate) # if MAX, return maximal payback for current gamestate
+            else: return (options[0][0], gamestate) # if MIN, return minimal payback for current gamestate
+
+        if gamestate.move == 1: return (options[-1][0], options[-1][1]) # if MAX, return maximal payback for current gamestate
+        else: return (options[0][0], options[0][1]) # if MIN, return minimal payback for current gamestate
 
 
 
 if __name__ == "__main__":
-    print(State(np.array([
-        [-1, 0, 1],
-        [0, 1, -1],
-        [0, 1, -1]
-    ])))
+    # G1 = Game(State(np.array([
+    #     [1, -1, -1],
+    #     [1, 0, 0],
+    #     [-1, 1, -1]
+    # ])))
+    G1 = Game()
+    G1.exe(Player(-1, 1), Player(1, 3))
