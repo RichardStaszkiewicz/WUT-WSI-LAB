@@ -5,7 +5,7 @@ INF = 1e9
 
 
 class State(object):
-    def __init__(self, board=None, move=-1) -> None:
+    def __init__(self, board=None, move=None) -> None:
         if(board is not None): #list [3][3] => -1 MIN, 1 MAX, 0 spare
             self.board = board
         else:
@@ -78,7 +78,8 @@ class Game(object):
             print("Players must be MIN-MAX")
             return Exception("Player error")
 
-        self.state.move = Player1.strategy
+        if self.state.move is None:
+            self.state.move = Player1.strategy
 
         in_game = self.state.verify_winner()
         print(self)
@@ -150,12 +151,22 @@ class Player(object):
         else: return (options[0][0], options[0][1]) # if MIN, return minimal payback for current gamestate
 
 
+# Obsługa
+# 1. Zakładamy obiekt Game
+# 1.1 Jeżeli chcemy zacząć z określonego punktu, w konstruktorze podajemy paramentr typu State
+# 2. Zakładamy dwóch garczy, MIN i MAX
+# 2.1 Gracz MIN jako pierwszy argument przyjmuje -1, a gracz MAX 1
+# 2.2 Drugim parametrem jest głębokość schodzenia algorytmu >= 1
+# 3. Wywołujemy metodę Game.exe(P1, P2)
+# 3.1 Zaczyna gracz wg parametrów zadeklarowanego stanie gry
+# 3.2 Zaczyna gracz, podany w metodzie jako pierwszy
+
 
 if __name__ == "__main__":
-    # G1 = Game(State(np.array([
-    #     [1, -1, -1],
-    #     [1, 0, 0],
-    #     [-1, 1, -1]
-    # ])))
-    G1 = Game()
+    G1 = Game(State(np.array([
+        [1, -1, -1],
+        [0, 0, 0],
+        [-1, 1, -1]
+    ])))
+    #G1 = Game()
     G1.exe(Player(-1, 1), Player(1, 3))
