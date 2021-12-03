@@ -46,15 +46,53 @@ class State(object):
 
         return hvalue
 
+    def __str__(self):
+        # X -> MAX
+        # O -> MIN
+        # _ -> not taken
+        info = ""
+        for y in (0, 1, 2):
+            for x in (0, 1, 2):
+                if self.board[y][x] == 1:
+                    info += "X"
+                elif self.board[y][x] == -1:
+                    info += "O"
+                else:
+                    info += " "
+                if x != 2: info += " | "
+
+            if y != 2: info += "\n---------\n"
+
+        return info
+
+
 
 class Game(object):
-    def __init__(self, state) -> None:
-        self.state = state
+    def __init__(self, state = None) -> None:
+        if state is not None: self.state = state
+        else: self.state = State()
 
     def exe(self, Player1, Player2):
         if Player1.strategy + Player2.strategy != 0:
             print("Players must be MIN-MAX")
             return Exception("Player error")
+
+        in_game = self.state.verify_winner()
+        while(in_game[0] == False):
+            self.state = Player1.move(self.state)
+            in_game = self.state.verify_winner()
+            if not in_game[0]: break
+            self.state = Player2.move(self.state)
+            in_game = self.state.verify_winner()
+
+        if in_game[1] == 0:
+            print("It's a tie!\n")
+        elif in_game[1] > 0:
+            print("MAX has won!\n")
+        elif in_game[1] < 0:
+            print("MIN has won!\n")
+
+        return 0
 
 
 
@@ -94,5 +132,4 @@ class Player(object):
 
 
 if __name__ == "__main__":
-    Game(State())
-    print(Player(-1, 3).verify_winner(State()))
+    print(State())
