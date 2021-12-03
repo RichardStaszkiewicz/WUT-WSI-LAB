@@ -5,7 +5,7 @@ INF = 1e9
 
 class State(object):
     def __init__(self, board=None, move=-1) -> None:
-        if(board): #list [3][3] => -1 MIN, 1 MAX, 0 spare
+        if(board is not None): #list [3][3] => -1 MIN, 1 MAX, 0 spare
             self.board = board
         else:
             self.board = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
@@ -68,13 +68,25 @@ class Player(object):
         return (True, 0) # there are no possible moves, nobody has won
 
 
-    def heuristic(gamestate: State()):
+    def heuristic(self, gamestate: State()):
         hvalue = 0
         for y in (0, 1, 2):
             for x in (0, 1, 2):
                 if gamestate.board[y][x] == 0:
-                    pass
+                    hvalue += self.single_place_hval(gamestate, x, y)
+        return hvalue * gamestate.move
 
+    def single_place_hval(self, gamestate, x, y):
+        hvalue = 0
+        if gamestate.move * -1 not in gamestate.board[y]: hvalue += 1
+        if gamestate.move * -1 not in gamestate.board.T[x]: hvalue += 1
+
+        if(x == y):
+            if gamestate.move * -1 not in [gamestate.board[i][i] for i in (0, 1, 2)]: hvalue += 1
+        if(y == 2-x):
+            if gamestate.move * -1 not in [gamestate.board[2-i][i] for i in (0, 1, 2)]: hvalue += 1
+
+        return hvalue
 
 
 
