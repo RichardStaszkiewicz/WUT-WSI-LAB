@@ -95,42 +95,39 @@ class TestPlayerVerify(object):
         assert ans[0] == False
         assert ans[1] == 0
 
-class TestPlayerHeuristic(object):
+class TestStateHeuristic(object):
     def test_example1(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 1, 1],
             [-1, 0, 1],
             [0, 1, 0]
         ]))
 
-        assert play.heuristic(state) == -3
-        assert play.single_place_hval(state, 1, 1) == 1
-        assert play.single_place_hval(state, 0, 2) == 1
-        assert play.single_place_hval(state, 2, 2) == 1
+        assert state.heuristic() == -3
+        assert state.single_place_hval(1, 1) == 1
+        assert state.single_place_hval(0, 2) == 1
+        assert state.single_place_hval(2, 2) == 1
 
     def test_example2(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [1, -1, -1],
             [1, 0, -1],
             [0, -1, 0]
         ]), 1)
 
-        assert play.heuristic(state) == 3
-        assert play.single_place_hval(state, 1, 1) == 1
-        assert play.single_place_hval(state, 0, 2) == 1
-        assert play.single_place_hval(state, 2, 2) == 1
+        assert state.heuristic() == 3
+        assert state.single_place_hval(1, 1) == 1
+        assert state.single_place_hval(0, 2) == 1
+        assert state.single_place_hval(2, 2) == 1
 
     def test_example3(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [0, 0, 0],
             [0, 0, 0],
             [0, 0, 0]
         ]), 1)
-        assert play.heuristic(state) == 4 * (2 + 3) + 4
+        assert state.heuristic() == 4 * (2 + 3) + 4
 
-        assert play.single_place_hval(state, 1, 1) == 4
-        assert play.single_place_hval(state, 0, 0) == 3
-        assert play.single_place_hval(state, 0, 1) == 2
+        assert state.single_place_hval(1, 1) == 4
+        assert state.single_place_hval(0, 0) == 3
+        assert state.single_place_hval(0, 1) == 2
