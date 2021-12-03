@@ -78,11 +78,14 @@ class Game(object):
             return Exception("Player error")
 
         in_game = self.state.verify_winner()
+        print(self)
         while(in_game[0] == False):
             self.state = Player1.move(self.state)
+            print(self)
             in_game = self.state.verify_winner()
             if not in_game[0]: break
             self.state = Player2.move(self.state)
+            print(self)
             in_game = self.state.verify_winner()
 
         if in_game[1] == 0:
@@ -94,6 +97,8 @@ class Game(object):
 
         return 0
 
+    def __str__(self):
+        return ""
 
 
 class Player(object):
@@ -132,4 +137,8 @@ class Player(object):
 
 
 if __name__ == "__main__":
-    print(State())
+    print(State(np.array([
+        [-1, 0, 1],
+        [0, 1, -1],
+        [0, 1, -1]
+    ])))

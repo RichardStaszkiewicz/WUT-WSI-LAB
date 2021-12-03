@@ -1,99 +1,100 @@
 from TTT_simulator import *
 import numpy as np
 
-class TestPlayerVerify(object):
+class TestStateVerify(object):
     def test_init(self):
         z = Player(-1, 3)
         assert z.depth == 3
         assert z.strategy == -1
 
+    def test_str(self):
+        x = State(np.array([
+            [-1, 0, 1],
+            [0, 1, -1],
+            [0, 1, -1]
+        ])).__str__()
+        assert x == "O |   | X\n---------\n  | X | O\n---------\n  | X | O"
+
     def test_verify_winner_MIN_high(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 0, 1],
             [-1, 0, 1],
             [-1, 1, 0]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == -1e9
 
     def test_verify_winner_MIN_wide(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 0, 1],
             [0, 1, 1],
             [-1, -1, -1]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == -1e9
 
     def test_verify_winner_MIN_across(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 0, 1],
             [0, -1, 1],
             [-1, 1, -1]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == -1e9
 
     def test_verify_winner_MAX_high(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [1, 1, -1],
             [-1, 1, -1],
             [-1, 1, 0]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == 1e9
 
     def test_verify_winner_MAX_wide(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 0, 1],
             [1, 1, 1],
             [-1, 1, -1]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == 1e9
 
     def test_verify_winner_MIN_across(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 0, 1],
             [0, 1, -1],
             [1, 1, -1]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == 1e9
 
     def test_verify_winner_tie(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, -1, 1],
             [1, 1, -1],
             [-1, 1, -1]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == True
         assert ans[1] == 0
 
     def test_verify_winner_still_play(self):
-        play = Player(-1, 3)
         state = State(np.array([
             [-1, 0, 1],
             [1, 1, -1],
             [-1, 1, -1]
         ]))
-        ans = play.verify_winner(state)
+        ans = state.verify_winner()
         assert ans[0] == False
         assert ans[1] == 0
+
 
 class TestStateHeuristic(object):
     def test_example1(self):
