@@ -163,10 +163,10 @@ class Player(object):
 
 
 if __name__ == "__main__":
-    G1 = Game(State(np.array([
-        [1, -1, -1],
-        [0, 0, 0],
-        [-1, 1, -1]
-    ])))
-    #G1 = Game()
-    G1.exe(Player(-1, 1), Player(1, 3))
+    # G1 = Game(State(np.array([
+    #     [1, -1, -1],
+    #     [0, 0, 0],
+    #     [-1, 1, -1]
+    # ])))
+    G1 = Game()
+    G1.exe(Player(-1, 1), Player(1, 9))
