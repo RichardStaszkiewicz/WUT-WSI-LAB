@@ -1,6 +1,7 @@
 """!
 @file layers.py
 @brief Implements only one class representing Layer.
+@version 0.1
 @section requirements
 Numpy version >= 1.19.4
 """
