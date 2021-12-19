@@ -46,15 +46,15 @@ class SVM(object):
         self.update_class_separation(choice)
 
         self.create_model()
+        m.verification = m.verification[0]
 
 
 if __name__ == "__main__":
-    m = SVM(['winequality-red.csv'], True)
+    m = SVM(['winequality-white.csv', 'winequality-red.csv'], True)
     m.prepare_data()
-    m.verification = m.verification[0]
 
     kernels = ['linear', 'rbf']     # dimension transformation
-    constants = [0.5, 10, 70]     # penalty
+    constants = [0.1, 1, 50]     # penalty
     gammas = [0.001, 0.1, 1]        # scouted coeff.
 
     for kernel in kernels:
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         for C in constants:
             rg = []
             for gamma in gammas:
-                model = SVC(kernel=kernel, C=C, gamma=gamma, tol=2)
+                model = SVC(kernel=kernel, C=C, gamma=gamma)
                 model.fit(
                     X=m.learning[m.learning.columns.difference(
                         ['quality', 'discriminator'])].values,
@@ -77,5 +77,9 @@ if __name__ == "__main__":
                 print(f'Accuracy for {kernel} with C={C} and gamma={gamma}: {rg[-1]}')
             results.append(rg)
         print(f"Accuracy using kernel: {kernel}\n")
-        results = pd.DataFrame(results, columns=gammas, index=constants)
+        results = pd.DataFrame(
+            results,
+            columns=[f'Gamma={g}' for g in gammas],
+            index=[f'Const={c}' for c in constants]
+        )
         print(results)
