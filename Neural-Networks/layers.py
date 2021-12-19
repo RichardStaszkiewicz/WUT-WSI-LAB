@@ -8,15 +8,13 @@ Numpy version >= 1.19.4
 
 import numpy as np
 
-np.random.seed(1)
-
 class Layer(object):
     """!
     @brief
     Represent a layer of neural network.
     """
 
-    def __init__(self, neurons_amount :int, input_amount :int, activation=None, weights=None, constant=None, afunctions=None) -> None:
+    def __init__(self, neurons_amount :int, input_amount :int, activation=None, weights=None, constant=None, afunctions=None, seed=None) -> None:
         """!
         @param neurons_amount [int] Amount of neurons in the layer.
         @param input_amount [int] Amount of layer inputs.
@@ -26,6 +24,8 @@ class Layer(object):
         @param afunctions [dict] Map of strings to fuctions of X containing possible activation functions. Default are: None, sigmoid and tanh.
         @return [Layer] Initialized class.
         """
+        np.random.seed(1 if seed is None else seed)
+
         self.activation = f"{activation}"
 
         if weights is not None: self.weights = weights
@@ -42,11 +42,22 @@ class Layer(object):
         }
 
 
-
-    def __activate(self, value):
+    def activate(self, In):
         """!
-        Activates the neuron. It comes down to performing an layer's activation
-        fuction on the given value.
+        @brief Activates the neuron. It comes down to activating the dot product of
+        the layer. Actualises parameter last_activation.
+        @param In [array-like object] Input of the layer.
+        @return [array-like object] Output of the layer. Mind the outputs amount is equal to the one of neurons in layer.
+        """
+
+        summator = np.dot(In, self.weights) + self.constant
+        self.last_activation = self.__activatef(summator)
+        return self.last_activation
+
+
+    def __activatef(self, value):
+        """!
+        @brief Activates neuron activation function.
 
         @param value [array-like object] Value of the neuron to activate.
         @return [array-like object] Value of the neuron after activation.
