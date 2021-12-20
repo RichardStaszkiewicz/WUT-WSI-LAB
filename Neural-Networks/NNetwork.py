@@ -7,6 +7,7 @@ Layers version >= 0.1
 """
 
 from layers import Layer
+import numpy as np
 
 
 class NNetwork(object):
@@ -63,6 +64,21 @@ class NNetwork(object):
         @param step [float] The learning rate of the algorithm. The higher, the more impact (up to 1)
         @return None
         """
+        predicted = self.predict(In)
+
+        for n_lay in reversed(range(len(self.layers))):
+            current_layer = self.layers[n_lay]
+
+            if n_lay == len(self.layers) - 1:       #the output layer
+                current_layer.error = Target - predicted
+                current_layer.sigma = current_layer.error * current_layer.activation_derivative(predicted)
+            else:
+                incomming_layer = self.layers[n_lay + 1]
+                current_layer.error = np.dot(incomming_layer.weights, incomming_layer.sigma)
+                current_layer.sigma = current_layer.error * current_layer.activation_derivative(current_layer.last_activation)
+
+        ## upgarade weights???
+
 
 if __name__ == "__main__":
     n = NNetwork()
