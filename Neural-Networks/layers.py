@@ -31,7 +31,7 @@ class Layer(object):
         self.activation = f"{activation}"
 
         if weights is not None: self.weights = weights
-        else: self.weights = np.random.rand(input_amount, neurons_amount)
+        else: self.weights = np.random.uniform(-1/input_amount, 1/input_amount, (input_amount, neurons_amount))#np.random.rand(input_amount, neurons_amount)
 
         if constant is not None: self.constant = constant
         else: self.constant = np.random.rand(neurons_amount)
@@ -50,7 +50,7 @@ class Layer(object):
             "sigmoid": lambda x: x * (1 - x)
         }
 
-        if self.activation not in afunctions.keys(): self.activation = "None"
+        if self.activation not in self.afunctions.keys(): self.activation = "None"
 
 
     def activate(self, In):
@@ -84,6 +84,3 @@ class Layer(object):
         @return [array-like object] Value of derivative for input.
         """
         return self.dafunctions[self.activation](values)
-
-
-

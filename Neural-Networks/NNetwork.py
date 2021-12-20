@@ -16,13 +16,14 @@ class NNetwork(object):
     Represents a neural network.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, global_seed=None) -> None:
         """!
         @brief
         Constructs a Neural network with no layers.
         @return NNetwork object
         """
         self.layers = []
+        self.global_seed = global_seed if global_seed is not None else 1
 
     @property
     def layers(self):
@@ -78,10 +79,25 @@ class NNetwork(object):
                 current_layer.sigma = current_layer.error * current_layer.activation_derivative(current_layer.last_activation)
 
         ## upgarade weights???
+        ## jakiś wzorek weights += sigma * transposed input to layer * step
+        ## skąd????
+
+        for n_lay in range(len(self.layers)):
+            current_layer = self.layers[n_lay]
+
+            given = np.atleast_2d(In if n_lay == 0 else self.layers[n_lay - 1].last_activation)
+
+            change = current_layer.sigma * given.T * step
+            current_layer.weights += current_layer.sigma * given.T * step
+
+        return
 
 
 if __name__ == "__main__":
     n = NNetwork()
-    n.add_layer(Layer(5, 1, 'tanh'))
-    n.add_layer(Layer(1, 5, 'sigmoid'))
-    print(n.predict([1]))
+    n.add_layer(Layer(5, 1, 'sigmoid', seed=10))
+    n.add_layer(Layer(5, 5, 'sigmoid', seed=2))
+    n.add_layer(Layer(1, 5, 'sigmoid', seed=5, weights=np.zeros((5, 1))))
+    print(n.predict([-9228]))
+    for i in range(1000): n.backpropagation([-9228], [21], 0.8)
+    print(n.predict([-9228]))

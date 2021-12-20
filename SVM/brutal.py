@@ -50,11 +50,11 @@ class SVM(object):
 
 
 if __name__ == "__main__":
-    m = SVM(['winequality-white.csv', 'winequality-red.csv'], True)
+    m = SVM(['winequality-red.csv'], True)
     m.prepare_data()
 
     kernels = ['linear', 'rbf']     # dimension transformation
-    constants = [0.1, 1, 50]     # penalty
+    constants = [1, 10, 100]     # penalty
     gammas = [0.001, 0.1, 1]        # scouted coeff.
 
     for kernel in kernels:
