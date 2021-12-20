@@ -53,8 +53,16 @@ class NNetwork(object):
         """
         for layer in self.layers:
             X = layer.activate(X)
-
         return X
+
+    def backpropagation(self, In, Target, step):
+        """!
+        @brief Performs the backpropagation on every each layer. Updates the weights.
+        @param In [array-like object] Vector of inputs.
+        @param Target [array-like object] Vector of targeted outputs
+        @param step [float] The learning rate of the algorithm. The higher, the more impact (up to 1)
+        @return None
+        """
 
 if __name__ == "__main__":
     n = NNetwork()
