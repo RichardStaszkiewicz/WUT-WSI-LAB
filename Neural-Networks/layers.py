@@ -14,7 +14,7 @@ class Layer(object):
     Represent a layer of neural network.
     """
 
-    def __init__(self, neurons_amount :int, input_amount :int, activation=None, weights=None, constant=None, afunctions=None, seed=None) -> None:
+    def __init__(self, neurons_amount :int, input_amount :int, activation=None, weights=None, constant=None, afunctions=None, dafunctions=None, seed=None) -> None:
         """!
         @param neurons_amount [int] Amount of neurons in the layer.
         @param input_amount [int] Amount of layer inputs.
@@ -22,6 +22,8 @@ class Layer(object):
         @param weights [array-like object] Matrix of weights in layer (M[neurons][input]).
         @param constant [array-like object] List of constants for each neuron (L[neurons]).
         @param afunctions [dict] Map of strings to fuctions of X containing possible activation functions. Default are: None, sigmoid and tanh.
+        @param dafunctions [dict] Map of strings to functions implementing derivatives of possible layers activation functions. Default are: None, tanh and sigmoid.
+        @param seed [int] Random seed of the layer for result repetivness.
         @return [Layer] Initialized class.
         """
         np.random.seed(1 if seed is None else seed)
@@ -41,6 +43,15 @@ class Layer(object):
             "sigmoid": lambda x: 1 / (1 + np.exp(-x))
         }
 
+        if dafunctions is not None: self.dafunctions = dafunctions
+        else: self.dafunctions = {
+            "None": lambda x: x,
+            "tanh": lambda x: 1 - x**2,
+            "sigmoid": lambda x: x * (1 - x)
+        }
+
+        if self.activation not in afunctions.keys(): self.activation = "None"
+
 
     def activate(self, In):
         """!
@@ -55,14 +66,24 @@ class Layer(object):
         return self.last_activation
 
 
-    def __activatef(self, value):
+    def __activatef(self, values):
         """!
         @brief Activates neuron activation function.
 
-        @param value [array-like object] Value of the neuron to activate.
-        @return [array-like object] Value of the neuron after activation.
+        @param values [array-like object] Values of neurons to activate.
+        @return [array-like object] Values of the neurons after activation.
         """
-        return self.afunctions[self.activation](value)
+        return self.afunctions[self.activation](values)
+
+
+    def activation_derivative(self, values):
+        """!
+        @brief Calculates an activation function derivative.
+
+        @param values [array-like object] Values to count the derivative from.
+        @return [array-like object] Value of derivative for input.
+        """
+        return self.dafunctions[self.activation](values)
 
 
 
