@@ -107,8 +107,9 @@ class NNetwork(object):
             for x in range(len(X)):
                 self.backpropagation(X[x], Y[x], step)
             if no % 5 == 0:
-                report.append(np.mean(np.square(Y - self.predict(X))))
-                print(f"Cycle: {no}, MSE: {report[-1]}")
+                mse = np.mean(np.square(Y - self.predict(X)))
+                report.append(mse)
+                print(f"Cycle: {no}, MSE: {mse}")
 
 
 def f(x):
@@ -116,18 +117,38 @@ def f(x):
 
 if __name__ == "__main__":
     n = NNetwork()
-    # n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=[1]))
-    # n.add_layer(Layer(2, 1, 'tanh', weights=np.array([[0.2, -0.5]]), constant=[1, 1]))
-    # n.add_layer(Layer(1, 2, weights=np.zeros((2, 1)), constant=[1]))
 
+    """Średnio działa"""
+    # n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=np.array([1])))
+    # n.add_layer(Layer(2, 1, 'tanh', weights=np.array([[0.2, -0.5]]), constant=np.array([1, 1])))
+    # n.add_layer(Layer(1, 2, weights=np.zeros((2, 1)), constant=[1]))
     # sample = 80 * np.random.rand(1000) - 40
     # answer = [[f(i)] for i in sample]
     # sample = [[i] for i in sample]
-    # n.train_batch(sample, answer, 0.2, 10000)
+    # n.train_batch(sample, answer, 0.2, 10)
+    # n.train_batch(sample, answer, 0.2, 10)
 
-    n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.15, 0.25], [0.2, 0.3]]), np.array([0.35, 0.35]))) #[neuron1], [neuron2]
-    n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.4, 0.5], [0.45, 0.55]]), np.array([0.6, 0.6]))) #[neuron1], [neuron2]
-    print(n.predict(np.array([0.05, 0.1])))
 
-    n.train_batch([[0.05, 0.1]], [[0.01, 0.99]], 0.5, 10000)
-    print(n.predict(np.array([0.05, 0.1])))
+    """Dziwnie działa"""
+    n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=np.array([1])))
+    n.add_layer(Layer(2, 1, 'tanh', weights=np.array([[0.2, -0.5]]), constant=np.array([1, 1])))
+    n.add_layer(Layer(1, 2, weights=np.zeros((2, 1)), constant=[1]))
+    samples = []
+
+    for c in range(100000):
+        sample = np.array([80 * np.random.rand() - 40])
+        samples.append(sample)
+        answer = np.array(f(sample))
+        n.backpropagation(sample, answer, 0.5)
+
+        if c % 1000 == 0:
+            print(f"Cycle: {c}, Total MSE: {np.mean([np.square(f(s)-n.predict(s)) for s in samples])}")
+
+
+    """Działa"""
+    # n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.15, 0.25], [0.2, 0.3]]), np.array([0.35, 0.35]))) #[neuron1], [neuron2]
+    # n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.4, 0.5], [0.45, 0.55]]), np.array([0.6, 0.6]))) #[neuron1], [neuron2]
+    # print(n.predict(np.array([0.05, 0.1])))
+
+    # n.train_batch([[0.05, 0.1]], [[0.01, 0.99]], 0.5, 10000)
+    # print(n.predict(np.array([0.05, 0.1])))
