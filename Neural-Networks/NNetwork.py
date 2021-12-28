@@ -87,17 +87,47 @@ class NNetwork(object):
 
             given = np.atleast_2d(In if n_lay == 0 else self.layers[n_lay - 1].last_activation)
 
-            change = current_layer.sigma * given.T * step
             current_layer.weights += current_layer.sigma * given.T * step
 
         return
 
+    def train_batch(self, X, Y, step, max_cycles):
+        """!
+        @brief Batch training of the model
+        @param X [array-like objects] Inputs
+        @param Y [array-like objects] Expected Outputs
+        @param step [float] Learning rate coefficiant
+        @param max_iterations [int] Maximal amount of iterations
+        @return [array-like object] The MSE report
+        """
+
+        report = []
+        print(f"Orginal MSE: {np.mean(np.square(Y - self.predict(X)))}")
+        for no in range(max_cycles):
+            for x in range(len(X)):
+                self.backpropagation(X[x], Y[x], step)
+            if no % 5 == 0:
+                report.append(np.mean(np.square(Y - self.predict(X))))
+                print(f"Cycle: {no}, MSE: {report[-1]}")
+
+
+def f(x):
+    return x**2*np.sin(x)+100*np.sin(x)*np.cos(x)
 
 if __name__ == "__main__":
     n = NNetwork()
-    n.add_layer(Layer(5, 1, 'sigmoid', seed=10))
-    n.add_layer(Layer(5, 5, 'sigmoid', seed=2))
-    n.add_layer(Layer(1, 5, 'sigmoid', seed=5, weights=np.zeros((5, 1))))
-    print(n.predict([-9228]))
-    for i in range(1000): n.backpropagation([-9228], [21], 0.8)
-    print(n.predict([-9228]))
+    # n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=[1]))
+    # n.add_layer(Layer(2, 1, 'tanh', weights=np.array([[0.2, -0.5]]), constant=[1, 1]))
+    # n.add_layer(Layer(1, 2, weights=np.zeros((2, 1)), constant=[1]))
+
+    # sample = 80 * np.random.rand(1000) - 40
+    # answer = [[f(i)] for i in sample]
+    # sample = [[i] for i in sample]
+    # n.train_batch(sample, answer, 0.2, 10000)
+
+    n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.15, 0.25], [0.2, 0.3]]), np.array([0.35, 0.35]))) #[neuron1], [neuron2]
+    n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.4, 0.5], [0.45, 0.55]]), np.array([0.6, 0.6]))) #[neuron1], [neuron2]
+    print(n.predict(np.array([0.05, 0.1])))
+
+    n.train_batch([[0.05, 0.1]], [[0.01, 0.99]], 0.5, 10000)
+    print(n.predict(np.array([0.05, 0.1])))

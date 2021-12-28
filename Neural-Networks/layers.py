@@ -61,7 +61,8 @@ class Layer(object):
         @return [array-like object] Output of the layer. Mind the outputs amount is equal to the one of neurons in layer.
         """
 
-        summator = np.dot(In, self.weights) + self.constant
+        summator = np.dot(In, self.weights)
+        summator += self.constant
         self.last_activation = self.__activatef(summator)
         return self.last_activation
 
