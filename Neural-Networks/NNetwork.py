@@ -71,7 +71,7 @@ class NNetwork(object):
             current_layer = self.layers[n_lay]
 
             if n_lay == len(self.layers) - 1:       #the output layer
-                current_layer.error = Target - predicted
+                current_layer.error = Target - predicted#0.5 * np.mean(np.square(Target-predicted)) #Target - predicted
                 current_layer.sigma = current_layer.error * current_layer.activation_derivative(predicted)
             else:
                 incomming_layer = self.layers[n_lay + 1]
@@ -88,10 +88,11 @@ class NNetwork(object):
             given = np.atleast_2d(In if n_lay == 0 else self.layers[n_lay - 1].last_activation)
 
             current_layer.weights += current_layer.sigma * given.T * step
+            current_layer.constant += current_layer.sigma * step
 
         return
 
-    def train_batch(self, X, Y, step, max_cycles):
+    def train_batch(self, X, Y, step, max_cycles, debug_info=True):
         """!
         @brief Batch training of the model
         @param X [array-like objects] Inputs
@@ -102,14 +103,14 @@ class NNetwork(object):
         """
 
         report = []
-        print(f"Orginal MSE: {np.mean(np.square(Y - self.predict(X)))}")
+        if debug_info: print(f"Orginal MSE: {np.mean(np.square(Y - self.predict(X)))}")
         for no in range(max_cycles):
             for x in range(len(X)):
                 self.backpropagation(X[x], Y[x], step)
             if no % 5 == 0:
                 mse = np.mean(np.square(Y - self.predict(X)))
                 report.append(mse)
-                print(f"Cycle: {no}, MSE: {mse}")
+                if debug_info: print(f"Cycle: {no}, MSE: {mse}")
 
 
 def f(x):
@@ -125,30 +126,34 @@ if __name__ == "__main__":
     # sample = 80 * np.random.rand(1000) - 40
     # answer = [[f(i)] for i in sample]
     # sample = [[i] for i in sample]
-    # n.train_batch(sample, answer, 0.2, 10)
-    # n.train_batch(sample, answer, 0.2, 10)
+    # n.train_batch(sample, answer, 0.2, 1000)
+    # n.train_batch(sample, answer, 0.2, 1000)
 
 
     """Dziwnie działa"""
-    n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=np.array([1])))
-    n.add_layer(Layer(2, 1, 'tanh', weights=np.array([[0.2, -0.5]]), constant=np.array([1, 1])))
-    n.add_layer(Layer(1, 2, weights=np.zeros((2, 1)), constant=[1]))
-    samples = []
+    # n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=np.array([1])))
+    # n.add_layer(Layer(2, 1, 'tanh', weights=np.array([[0.2, -0.5]]), constant=np.array([1, 1])))
+    # n.add_layer(Layer(1, 2, weights=np.zeros((2, 1)), constant=[1]))
 
-    for c in range(100000):
-        sample = np.array([80 * np.random.rand() - 40])
-        samples.append(sample)
-        answer = np.array(f(sample))
-        n.backpropagation(sample, answer, 0.5)
+    # samples = []
 
-        if c % 1000 == 0:
-            print(f"Cycle: {c}, Total MSE: {np.mean([np.square(f(s)-n.predict(s)) for s in samples])}")
+    # n.backpropagation([3], [f(3)], 0.5)
+
+    # for c in range(100000):
+    #     sample = np.array([80 * np.random.rand() - 40])
+    #     samples.append(sample)
+    #     answer = np.array(f(sample))
+    #     n.backpropagation(sample, answer, 0.5)
+
+    #     if c % 1000 == 0:
+    #         print(f"Cycle: {c}, Total MSE: {np.mean([np.square(f(s)-n.predict(s)) for s in samples])}, MSE in current data: {np.mean(np.square(answer-n.predict(sample)))}")
 
 
-    """Działa"""
-    # n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.15, 0.25], [0.2, 0.3]]), np.array([0.35, 0.35]))) #[neuron1], [neuron2]
-    # n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.4, 0.5], [0.45, 0.55]]), np.array([0.6, 0.6]))) #[neuron1], [neuron2]
-    # print(n.predict(np.array([0.05, 0.1])))
+    # """Działa"""
+    n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.15, 0.25], [0.2, 0.3]]), np.array([0.35, 0.35]))) #[neuron1], [neuron2]
+    n.add_layer(Layer(2, 2, 'sigmoid', np.array([[0.4, 0.5], [0.45, 0.55]]), np.array([0.6, 0.6]))) #[neuron1], [neuron2]
+    #n.add_layer(Layer(2, 2, weights=np.zeros((2, 2)), constant=np.array([1, 1])))
+    print(n.predict(np.array([0.05, 0.1])))
 
-    # n.train_batch([[0.05, 0.1]], [[0.01, 0.99]], 0.5, 10000)
-    # print(n.predict(np.array([0.05, 0.1])))
+    n.train_batch([[0.05, 0.1]], [[0.01, 0.99]], 0.5, 10000, debug_info=False)
+    print(n.predict(np.array([0.05, 0.1])))
