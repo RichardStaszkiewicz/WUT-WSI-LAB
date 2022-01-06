@@ -78,6 +78,7 @@ class NNetwork(object):
                 current_layer.error = np.dot(incomming_layer.weights, incomming_layer.sigma)
                 current_layer.sigma = current_layer.error * current_layer.activation_derivative(current_layer.last_activation)
 
+        ##Sigma działą jak ma - w pierwszym przejściu nieobciążona
         ## upgarade weights???
         ## jakiś wzorek weights += sigma * transposed input to layer * step
         ## skąd????
@@ -122,12 +123,13 @@ if __name__ == "__main__":
     # """Średnio działa"""
     n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=np.array([1], np.float64)))
     n.add_layer(Layer(20, 1, 'tanh'))
-    n.add_layer(Layer(20, 20, 'tanh'))
+    #n.add_layer(Layer(20, 20, 'tanh'))
     n.add_layer(Layer(1, 20, weights=np.zeros((20, 1))))
+
     sample = 80 * np.random.rand(1000) - 40
     answer = [[f(i)] for i in sample]
     sample = [[i] for i in sample]
-    n.train_batch(sample, answer, 0.2, 1000)
+    n.train_batch(sample, answer, 0.00001, 1000)
     n.train_batch(sample, answer, 0.2, 1000)
 
 
