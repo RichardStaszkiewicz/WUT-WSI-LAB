@@ -45,7 +45,7 @@ class Layer(object):
 
         if dafunctions is not None: self.dafunctions = dafunctions
         else: self.dafunctions = {
-            "None": lambda x: 1,
+            "None": lambda x: np.array([1 for i in x], np.float64),
             "tanh": lambda x: 1 - x**2,
             "sigmoid": lambda x: x * (1 - x)
         }
