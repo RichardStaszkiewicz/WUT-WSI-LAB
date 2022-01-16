@@ -1,44 +1,64 @@
 import gym
 import numpy as np
 
-env = gym.make("Taxi-v3")
 
-EPOCHS = 1000
-qtable = np.zeros([env.observation_space.n, env.action_space.n])
+class QLearn:
 
-learning_rate_alpha = 0.1
-discount_factior_gamma = 0.2
-exploration_coeff = 0.3
+    def __init__(self, qt=None, debug=True) -> None:
+        self.env = gym.make("Taxi-v3")
+        self.qtable = np.zeros([self.env.observation_space.n, self.env.action_space.n]) if qt is None else qt
+        self.debug = debug
 
+        # logs of simulations for training
+        self.simulation_training_log = [(0, 0)] # epochs, penalties
 
-# logs of simulations
-simulation_training_log = []
+    def train(self, alpha=None, gamma=None, expl=None, epochs=None):
+        self.EPOCHS = 1000000 if epochs is None else epochs
+        self.learning_rate_alpha = 0.1 if alpha is None else alpha
+        self.discount_factior_gamma = 0.2 if gamma is None else gamma
+        self.exploration_coeff = 0.3 if expl is None else expl
 
-observation = env.reset()
-reward = 0
-for _ in range(EPOCHS): # while having epochs
-    env.render()
-
-    if np.random.uniform(0, 1) < exploration_coeff: #explore
-        action = env.action_space.sample()
-    else:                                           #exploit
-        action = np.argmax(qtable[observation])
-
-
-    new_observation, reward, done, info = env.step(action) #make a step with a new policy
-
-    current_qval = qtable[observation][action] #current
-    potentially_best = np.max(qtable[new_observation]) #best outcome after taking a step
-
-    # QLearning model update of Qtable
-    qtable[observation][action] = (1 - learning_rate_alpha) * current_qval + learning_rate_alpha * (reward + discount_factior_gamma * potentially_best)
-
-    observation = new_observation
-
-    if done:
-        observation = env.reset()
+        if self.debug: print(f"Training initiated")
+        observation = self.env.reset()
         reward = 0
-        simulations_count += 1
-        print()
+        penalties = 0
+        for epoch in range(self.EPOCHS): # while having epochs
+            #env.render()
 
-env.close()
+            if np.random.uniform(0, 1) < self.exploration_coeff: #explore
+                action = self.env.action_space.sample()
+            else:                                           #exploit
+                action = np.argmax(self.qtable[observation])
+
+
+            new_observation, reward, done, info = self.env.step(action) #make a step with a new policy
+
+            if reward == -10:
+                penalties += 1
+
+            current_qval = self.qtable[observation][action] #current
+            potentially_best = np.max(self.qtable[new_observation]) #best outcome after taking a step
+
+            # QLearning model update of Qtable
+            self.qtable[observation][action] = (1 - self.learning_rate_alpha) * current_qval + self.learning_rate_alpha * (reward + self.discount_factior_gamma * potentially_best)
+
+            observation = new_observation
+
+
+            if done:
+                self.simulation_training_log.append((epoch, penalties))
+                observation = self.env.reset()
+                reward = 0
+                penalties = 0
+
+                if len(self.simulation_training_log) % 1000 == 0 and self.debug:
+                    print(f"Simulation: {len(self.simulation_training_log)} Epochs: {self.simulation_training_log[-1][0]} Penalties: {self.simulation_training_log[-1][1]}")
+
+    def __del__(self):
+        self.env.close()
+
+
+if __name__ == "__main__":
+    qmodel = QLearn()
+    qmodel.train()
+    qmodel.train()
