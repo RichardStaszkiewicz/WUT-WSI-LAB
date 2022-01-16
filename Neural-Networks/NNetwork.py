@@ -7,6 +7,7 @@ Layers version >= 0.1
 """
 
 from layers import Layer
+from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
 
@@ -104,6 +105,8 @@ class NNetwork(object):
         """
 
         report = []
+        scaler = MinMaxScaler().fit(Y)
+        Y = scaler.transform(Y)
         if debug_info: print(f"Orginal MSE: {np.mean(np.square(Y - self.predict(X)))}")
         for no in range(max_cycles):
             for x in range(len(X)):
@@ -112,9 +115,11 @@ class NNetwork(object):
                 mse = np.mean(np.square(Y - self.predict(X)))
                 report.append(mse)
                 if debug_info: print(f"Cycle: {no}, MSE: {mse}")
+        Y = scaler.inverse_transform(Y)
 
 
 def f(x):
+    return x**2
     return x**2*np.sin(x)+100*np.sin(x)*np.cos(x)
 
 if __name__ == "__main__":
@@ -123,7 +128,7 @@ if __name__ == "__main__":
     # """Średnio działa"""
     n.add_layer(Layer(1, 1, 'tanh', weights=np.array([[-0.3]]), constant=np.array([1], np.float64)))
     n.add_layer(Layer(20, 1, 'tanh'))
-    #n.add_layer(Layer(20, 20, 'tanh'))
+    n.add_layer(Layer(20, 20, 'tanh'))
     n.add_layer(Layer(1, 20, weights=np.zeros((20, 1))))
 
     sample = 80 * np.random.rand(1000) - 40
