@@ -1,7 +1,9 @@
+from distutils.log import debug
 from math import gamma
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 
 
 class QLearn:
@@ -105,7 +107,7 @@ class QLearn:
             print(f"Epochs:\n\tmax = {max_epoch}\n\tmin = {min_epoch}\n\tavg = {sum_epoch / sample}")
             print(f"Penalties:\n\tmax = {max_penal}\n\tmin = {min_penal}\n\tavg = {sum_penal / sample}")
 
-        return [(max_epoch, min_epoch, sum_epoch/sample), (max_penal, min_penal, sum_penal/sample)]
+        return [max_epoch, min_epoch, sum_epoch/sample, max_penal, min_penal, sum_penal/sample]
 
     def __del__(self):
         self.env.close()
@@ -146,11 +148,20 @@ if __name__ == "__main__":
     alphas = [0.1, 0.5, 0.8]
     gammas = [0.1, 0.5, 0.8]
     explores = [0.1, 0.5, 0.8]
+    raports = []
 
     for a in alphas:
         for g in gammas:
             for e in explores:
-                qmodel = QLearn()
+                qmodel = QLearn(debug=False)
                 qmodel.train(alpha=a, gamma=g, expl=e, simulations=5000)
-                qmodel.evaluate(1000)
+                raports.append([a, g, e] + qmodel.evaluate(1000))
                 plotter(qmodel, 100)
+
+    raports = np.array(raports)
+    with open("Raport.csv", 'w+') as handle:
+        fieldnames = ['Alpha', 'Gamma', 'Exploration', 'Epoch Min', 'Epoch Max', 'Epoch Avg', 'Penal Min', 'Penal Max', 'Penal Avg']
+        writer = csv.writer(handle, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(fieldnames)
+        for r in raports:
+            writer.writerow(r)
